@@ -1,107 +1,116 @@
-# OnlineVakeel — Architecture in Six Days
-Read one portion a day. Each day has a short summary, a few subsections, and a diagram. The aim is to see the whole system clearly, without implementation detail.
-OnlineVakeel helps a person in India describe a legal problem in everyday language, receive an answer tied to Indian statutes and known judgments, get a draft legal notice, and book a local advocate.
-A deeper companion, with the same picture in one place, is `SYSTEM_DESIGN.md`.
-## The six days
-| Day | Portion | You will understand |
-| --- | --- | --- |
-| 1 | The product and its three layers | Who it is for, and the path from browser to answer |
-| 2 | One question, one pipeline | How a message is turned into a case |
-| 3 | The legal library | Why the answer quotes real sections |
-| 4 | The reply and the notice | Where the words and the document come from |
-| 5 | The human lawyer | How a case is matched, booked, and accepted |
-| 6 | The whole system at rest | Screens, memory, two ways to run, and the limits |
-```mermaid
-flowchart LR
-    D1[Day 1<br/>People and layers] --> D2[Day 2<br/>The pipeline]
-    D2 --> D3[Day 3<br/>The library]
-    D3 --> D4[Day 4<br/>Reply and notice]
-    D4 --> D5[Day 5<br/>The advocate]
-    D5 --> D6[Day 6<br/>The full picture]
-```
+
 ---
-# Day 1 — The product and its three layers
+# Day 6 — The whole system at rest
 ## Summary
-OnlineVakeel is a consultation desk for Indian legal questions. A citizen describes a problem. The system answers in plain language, shows the related law, drafts a notice, and offers advocates near that city and court. An advocate uses the same desk to receive bookings and, after accepting, to see the citizen’s phone number. A third role, the operator, grows the legal library offline. The live product is three layers: a website, an API that runs the consultation, and the stores of law, lawyers, and bookings.
-## Who it serves
-**Citizen.** Opens the site, types a question, reads the guidance, reviews the notice, and books a lawyer. Example: “My builder in Bengaluru delayed my flat by two years after I paid ₹75 lakhs.”
-**Advocate.** Registers with a Bar Council ID, signs in, and works an inbox of consultation requests. Contact details stay hidden until the advocate accepts.
-**Operator.** Adds Bare Acts and court judgments to the library. This happens outside the chat, through separate ingest jobs.
-The product prepares information and a document, then introduces a human lawyer. Filing a case and giving a licensed opinion remain with that advocate.
-## The three layers
+The citizen journey and the advocate journey meet on one desk and one API. The legal library is durable. The live case and the inbox of bookings live with the running API. The product runs with no keys at all, and it runs richer when models and a database are attached. Either way the same screens and the same pipeline apply. The system prepares guidance and a draft, then stops at the advocate: it does not file, it does not decide jurisdiction as a court would, and it does not replace licensed advice.
+## The two journeys on one desk
 ```mermaid
 flowchart LR
-    Citizen[Citizen]
-    Advocate[Advocate]
-    subgraph Site["1. Website"]
-        Home[Landing page]
+    subgraph Citizen
+        A[Landing question] --> B[Chat]
+        B --> C[Laws]
+        B --> D[Notice]
+        B --> E[Advocates]
+        E --> F[Booking]
+    end
+    subgraph Advocate
+        G[Login or register] --> H[Inbox]
+        H --> I[Accept]
+        I --> J[Call the citizen]
+    end
+    B --> API[(Consultation API)]
+    F --> API
+    G --> API
+    H --> API
+    I --> API
+```
+The landing page only collects the question and opens the desk. Everything after that is the desk talking to the API: send a message, load the library view, list advocates, create a booking, sign an advocate in, list leads, accept or decline, read or write a review.
+## What is remembered
+```mermaid
+flowchart TB
+    subgraph Lasts["Stays with the product"]
+        Lib[Built-in legal library]
+        Demo[Demo advocate profiles]
+        DB[Cloud library, when configured]
+    end
+    subgraph Visit["Stays for this visit"]
+        Chat[Chat lines in the browser]
+        Case[Case facts in the API]
+        Inbox[Bookings in the API]
+    end
+    Browser[Citizen browser] --> Chat
+    Chat -->|sent again with the next message| API[API]
+    API --> Case
+    API --> Inbox
+    API --> Lib
+```
+| What | Where it sits | After a restart of the API |
+| --- | --- | --- |
+| The chat the citizen can still see | The browser, and it is sent again with the next message | Still in the open tab |
+| Category, amount, place for that case | The API’s case memory | Cleared |
+| Bookings and reviews created in the session | The API’s lead memory | Cleared |
+| Built-in statutes and demo advocates | Shipped with the app | Still there |
+| Extra sections loaded into the cloud database | The database | Still there |
+The desk can continue a conversation after a refresh only for what the browser still holds. The engine’s own memory of the case is for the life of that API process. A single server is the shape this build is designed for.
+## Two ways it runs
+```mermaid
+flowchart TB
+    Desk[Consultation desk] --> API[API]
+    subgraph Always["Always available"]
+        Rules[The eight steps]
+        Seed[Built-in library and demo advocates]
+        Templates[Written reply and notice templates]
+    end
+    subgraph Optional["Used when configured"]
+        Model[Language models for wording]
+        Embed[Embeddings to rank sections by meaning]
+        Cloud[Cloud database for a larger library]
+    end
+    API --> Always
+    API -.-> Optional
+    Optional -.->|if a call fails, that step uses the always-available path| Always
+```
+**Ready with nothing configured.** Built-in statutes, demo advocates, template explanations, template notices. The full citizen path and the advocate inbox can be demonstrated.
+**Connected.** A general model and a Hindi-capable model for prose, an embedding service to help rank sections, and a cloud database for hybrid search over a larger corpus. If any of those calls fail, that step continues on the ready-with-nothing path. The rest of the turn still returns.
+## The picture in one diagram
+```mermaid
+flowchart TB
+    User[Citizen or advocate]
+    subgraph Site
         Desk[Consultation desk]
     end
-    subgraph Engine["2. Consultation engine"]
-        API[API]
-        Flow[Fixed consultation flow]
+    subgraph Engine
+        Coord[Coordinator]
+        Safe[Hide details and mark urgency]
+        Read[Read the case]
+        Find[Find and check the law]
+        Write[Reply and notice]
+        Match[Match and book]
     end
-    subgraph Memory["3. Knowledge and records"]
-        Laws[Legal library]
-        People[Advocate directory]
-        Books[Bookings]
+    subgraph Held
+        Library[(Legal library)]
+        Directory[(Advocates)]
+        Leads[(Bookings)]
     end
-    Citizen --> Home
-    Citizen --> Desk
-    Advocate --> Desk
-    Home -->|opens the desk with the question| Desk
-    Desk --> API
-    API --> Flow
-    Flow --> Laws
-    Flow --> People
-    API --> Books
+    User --> Desk
+    Desk --> Coord
+    Coord --> Safe --> Read --> Find
+    Find --> Write
+    Find --> Match
+    Find --> Library
+    Match --> Directory
+    Desk --> Leads
+    Write -.->|optional wording| Models[Language models]
 ```
-1. **Website.** The landing page takes the first question and opens the consultation desk. The desk is one screen with the chat, the laws, the notice, the advocate list, and the advocate login.
-2. **Consultation engine.** One API receives every action from the desk. A consultation always follows the same sequence of steps. Day 2 walks that sequence.
-3. **Knowledge and records.** A legal library, a directory of advocates, and the list of bookings. The library can run from a built-in set of statutes. A cloud database is optional and holds a larger library when it is configured.
-Language models sit beside the engine. They help with wording when keys are present. The consultation still completes when they are absent. Day 4 covers that.
-## What one visit produces
-By the end of a turn the citizen can see four things at once:
-- A plain-language reply
-- The sections and judgments that reply rests on
-- A draft pre-litigation notice
-- Advocates ranked for that kind of case and that place
-## Close of day
-Remember the three layers: website, consultation engine, knowledge and records. Tomorrow is only about what happens inside the engine when one message arrives.
----
-# Day 2 — One question, one pipeline
-## Summary
-Every citizen message takes the same path. A coordinator runs specialist steps in a fixed order. Each step does one job and returns a structured result. The steps do not hold a conversation with each other. The coordinator merges those results into one response. A later message in the same sitting reuses facts already collected, so the citizen does not have to repeat the amount, the city, or the kind of dispute.
-## The path of a message
-```mermaid
-sequenceDiagram
-    actor Citizen
-    participant Desk as Consultation desk
-    participant Engine as Coordinator
-    participant Steps as Specialist steps
-    participant Library as Legal library
-    Citizen->>Desk: Describes the problem
-    Desk->>Engine: Message, case id, earlier chat
-    Engine->>Steps: Hide personal details
-    Engine->>Steps: Mark emergency, urgent, or routine
-    Engine->>Steps: Read category, money, dates, place
-    Engine->>Library: Find matching sections
-    Engine->>Steps: Check those sections
-    Engine->>Steps: Write the reply, the notice, and the lawyer list
-    Engine-->>Desk: One combined answer
-    Desk-->>Citizen: Chat plus updated side panel
-```
-## The eight steps, in order
-```mermaid
-flowchart TD
-    Q[Citizen message]
-    Q --> A[1. Hide personal details]
-    A --> B[2. Mark urgency]
-    B --> C[3. Read the case]
-    C --> D[4. Find the law]
-    D --> E[5. Check the citations]
-    E --> F[6. Write the reply]
-    E --> G[7. Draft the notice]
-    E --> H[8. Match advocates]
-    F --> R[One response]
-    G --> R
+Read this from top to bottom: a person, a desk, a coordinator, safety, understanding the case, law, then words and a lawyer. The library feeds the law step. The directory feeds the match. Bookings are a separate record the desk creates after the citizen chooses someone.
+## What to keep in mind
+- The order of work is fixed, so every answer has the same parts: guidance, sources, a notice, and lawyers.
+- Personal details are masked before search and before any model call.
+- Citations come from the library, then pass a check.
+- Wording can come from a model or from a template. The sources stay the same.
+- The phone number appears to the advocate after acceptance.
+- Place and court are a practical match for finding a lawyer. The advocate confirms where a matter should actually be filed.
+- The draft notice is a document to review with that advocate. The system does not file it.
+- Emergency situations still return an answer, and they surface public helplines first.
+## Close of the six days
+You now have the full architecture at the level of people, flow, sources, writing, handoff, and runtime. Day 1 was who and where. Day 2 was the eight steps. Day 3 was the library. Day 4 was the reply and the notice. Day 5 was the advocate. Day 6 is how those parts sit together, what lasts, and where the product stops so a human lawyer can take over.
