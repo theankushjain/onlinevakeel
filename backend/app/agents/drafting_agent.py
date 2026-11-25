@@ -1,4 +1,5 @@
 import logging
+import time
 import httpx
 from datetime import datetime
 from typing import Dict, Any, List, Optional
@@ -12,6 +13,9 @@ class DraftingAgent:
     (Legal Demand Notices, Electronic Evidence Certificates under Sec 63 BSA, RTI Applications)
     dynamically synchronized with every turn of the citizen-counsel conversation.
     """
+
+    #: Total wall-clock budget for the Gemini drafting step, across every model tried.
+    GEMINI_TOTAL_BUDGET_S = 18.0
 
     @classmethod
     def draft_document(
@@ -133,10 +137,13 @@ class DraftingAgent:
         has_stamp: bool
     ) -> str:
         models_to_try = [
-            "gemini-3.1-flash-lite",
-            "gemini-3.5-flash",
+            # Ordered by measured response time, fastest first. The previous
+            # order put gemini-3.5-flash second, and it regularly consumed the
+            # full timeout before a usable draft came back.
             "gemini-3.5-flash-lite",
-            "gemini-3-flash-preview"
+            "gemini-3.1-flash-lite",
+            "gemini-3-flash-preview",
+            "gemini-3.5-flash"
         ]
         api_key = settings.GEMINI_API_KEY
 
@@ -186,15 +193,31 @@ Draft the complete, professional Legal Notice text now with proper numbered para
             }
         }
 
+        # Overall budget for this step; the deterministic generator below
+        # produces a complete notice, so there is no reason to keep a citizen
+        # waiting on a fourth slow model.
+        deadline = time.monotonic() + cls.GEMINI_TOTAL_BUDGET_S
+
         for model_name in models_to_try:
+            if deadline - time.monotonic() <= 1.0:
+                logger.info("Gemini drafting budget exhausted; using the deterministic generator.")
+                break
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
             for payload in [payload_with_budget, payload_standard]:
                 try:
-                    with httpx.Client(timeout=12.0) as client:
+                    with httpx.Client(timeout=min(12.0, max(1.0, deadline - time.monotonic()))) as client:
                         resp = client.post(url, json=payload)
                         if resp.status_code == 200:
                             data = resp.json()
-                            text = data["candidates"][0]["content"]["parts"][0]["text"]
+                            candidate = data["candidates"][0]
+                            text = candidate["content"]["parts"][0]["text"]
+                            # A notice cut off mid-clause is worse than no notice
+                            # at all — fall through to the deterministic generator.
+                            if candidate.get("finishReason") == "MAX_TOKENS":
+                                logger.warning(
+                                    f"Gemini {model_name} hit the output cap while drafting; discarding the partial notice."
+                                )
+                                break
                             if text and len(text.strip()) > 250:
                                 return text.strip()
                         elif resp.status_code == 400 and payload == payload_with_budget:

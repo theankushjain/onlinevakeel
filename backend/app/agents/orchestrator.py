@@ -1,4 +1,6 @@
+import re
 import uuid
+from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, Any, List, Optional
 from app.safety.pii_redactor import PIIRedactor
 from app.safety.urgency_triage import UrgencyTriage
@@ -18,6 +20,24 @@ class OrchestratorAgent:
 
     # In-memory session store (case_id -> state dict)
     ACTIVE_SESSIONS: Dict[str, Dict[str, Any]] = {}
+
+    @staticmethod
+    def _amount_value(text: Optional[str]) -> float:
+        """Rough rupee value of an extracted amount, used only for comparison."""
+        if not text:
+            return 0.0
+        t = text.lower().replace(",", "")
+        match = re.search(r"(\d+(?:\.\d+)?)", t)
+        if not match:
+            return 0.0
+        value = float(match.group(1))
+        if "crore" in t:
+            value *= 10_000_000
+        elif "lakh" in t:
+            value *= 100_000
+        elif re.search(r"\d\s*k\b", t):
+            value *= 1_000
+        return value
 
     @classmethod
     def process_consultation(
@@ -51,7 +71,16 @@ class OrchestratorAgent:
             
             old_facts = existing_session.get("facts", {})
             facts = {
-                "monetary_amount": new_facts.get("monetary_amount") or old_facts.get("monetary_amount"),
+                # A later message often mentions an incidental sum — the ₹100
+                # stamp paper, a court fee — which used to overwrite the amount
+                # in dispute and leave the notice demanding ₹100. Keep whichever
+                # figure is larger so the principal survives the conversation.
+                "monetary_amount": (
+                    new_facts.get("monetary_amount")
+                    if cls._amount_value(new_facts.get("monetary_amount"))
+                    > cls._amount_value(old_facts.get("monetary_amount"))
+                    else (old_facts.get("monetary_amount") or new_facts.get("monetary_amount"))
+                ),
                 "dates_mentioned": list(set(old_facts.get("dates_mentioned", []) + new_facts.get("dates_mentioned", []))),
                 "locations_mentioned": new_facts.get("locations_mentioned") if new_facts.get("locations_mentioned") else old_facts.get("locations_mentioned", []),
                 "localities_mentioned": new_facts.get("localities_mentioned") if new_facts.get("localities_mentioned") else old_facts.get("localities_mentioned", []),
@@ -81,42 +110,50 @@ class OrchestratorAgent:
         # Step 5: Verifier Agent - Verify every citation
         verifier_result = VerifierAgent.verify_citations(remedies)
 
-        # Step 6: Drafting Agent - Generate dynamic legal notice draft synchronized with chat
-        draft_result = DraftingAgent.draft_document(
-            category=category,
-            facts=facts,
-            user_message=redacted_message,
-            history=history,
-            remedies=remedies
-        )
+        # Steps 6 and 8 each make their own model call and neither reads the
+        # other's result, so they run together rather than one after the other.
+        # Step 7 is pure in-memory ranking and runs here while they are in flight.
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            draft_future = pool.submit(
+                DraftingAgent.draft_document,
+                category=category,
+                facts=facts,
+                user_message=redacted_message,
+                history=history,
+                remedies=remedies
+            )
+            guidance_future = pool.submit(
+                ConversationalAgent.generate_human_response,
+                user_query=redacted_message,
+                category=category,
+                facts=facts,
+                remedies=remedies,
+                triage=triage_result,
+                language=language,
+                history=history
+            )
 
-        # Step 7: Handoff Agent - Advocate brief & matched verified lawyers
-        brief_result = HandoffAgent.prepare_case_brief(
-            case_id=case_id,
-            category=category,
-            facts=facts,
-            remedies=remedies,
-            urgency=triage_result["urgency"]
-        )
-        matched_advocates = HandoffAgent.match_advocates(
-            category=category, 
-            city=city, 
-            locality=locality, 
-            district_court=district_court
-        )
-        exact_location_matches = [a for a in matched_advocates if a.get("is_location_match")]
-        location_matched_count = len(exact_location_matches) if exact_location_matches else (1 if (city or district_court) else len(matched_advocates))
+            # Step 7: Handoff Agent - Advocate brief & matched verified lawyers
+            brief_result = HandoffAgent.prepare_case_brief(
+                case_id=case_id,
+                category=category,
+                facts=facts,
+                remedies=remedies,
+                urgency=triage_result["urgency"]
+            )
+            matched_advocates = HandoffAgent.match_advocates(
+                category=category,
+                city=city,
+                locality=locality,
+                district_court=district_court
+            )
+            exact_location_matches = [a for a in matched_advocates if a.get("is_location_match")]
+            location_matched_count = len(exact_location_matches) if exact_location_matches else (1 if (city or district_court) else len(matched_advocates))
 
-        # Step 8: Build empathetic, human, layman guidance with chat history context
-        guidance_text = ConversationalAgent.generate_human_response(
-            user_query=redacted_message,
-            category=category,
-            facts=facts,
-            remedies=remedies,
-            triage=triage_result,
-            language=language,
-            history=history
-        )
+            # Step 6 result: the synchronized legal notice draft
+            draft_result = draft_future.result()
+            # Step 8 result: the plain-language reply
+            guidance_text = guidance_future.result()
 
         # Save / Update session state
         cls.ACTIVE_SESSIONS[case_id] = {

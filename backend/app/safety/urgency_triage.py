@@ -6,10 +6,21 @@ class UrgencyTriage:
     national statutory helplines (NALSA, DLSA, Police 112, Women Helpline 1091, Cyber 1930).
     """
 
+    # Matching is a plain substring test, so these have to cover how people
+    # actually write. "threat to life" alone never fired on "threatened to kill
+    # me", which is the far more common phrasing.
     EMERGENCY_KEYWORDS = [
         "arrest", "police custody", "police beating", "illegal detention", "threat to life",
         "suicide", "physical abuse", "domestic violence", "marpeet", "hathapai", "gun",
-        "kidnap", "extortion", "dowry harassment", "fir filed", "chhaapa", "raid"
+        "kidnap", "extortion", "dowry harassment", "fir filed", "chhaapa", "raid",
+        # life-threat phrasings
+        "threaten to kill", "threatened to kill", "threatening to kill", "kill me",
+        "kill us", "jaan se mar", "jaan se khatra", "attempt to murder", "murder me",
+        # violence and abuse
+        "beat me", "beating me", "beaten me", "assault", "acid attack", "molest",
+        "rape", "sexual harassment", "harassing me physically", "burn me",
+        # self-harm
+        "end my life", "self harm", "harm myself", "khudkushi",
     ]
     
     URGENT_KEYWORDS = [

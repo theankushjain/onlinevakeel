@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useCallback, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
@@ -241,7 +241,46 @@ const INDIAN_CITIES_CATALOG = [
 ];
 
 /* ─── Component ─────────────────────────────────────── */
-export default function HomePage() {
+/**
+ * Agent replies are kept short by the backend, but a language model can still
+ * run long. Anything past this many characters is clamped with a toggle so the
+ * conversation stays scannable — the full statutory detail is in the Dossier
+ * panel on the right regardless.
+ */
+const LONG_REPLY_CHARS = 700;
+
+function CounselMessage({ text, clamp = true }: { text: string; clamp?: boolean }) {
+  const [open, setOpen] = useState(false);
+
+  if (!clamp || text.length <= LONG_REPLY_CHARS) {
+    return (
+      <div className="md-body">
+        <ReactMarkdown>{text}</ReactMarkdown>
+      </div>
+    );
+  }
+
+  // Cut on a line break where possible so a bullet is never sliced in half.
+  const head = text.slice(0, LONG_REPLY_CHARS);
+  const breakAt = head.lastIndexOf("\n");
+  const preview = (breakAt > 250 ? head.slice(0, breakAt) : head).trimEnd() + " …";
+
+  return (
+    <div className="md-body">
+      <ReactMarkdown>{open ? text : preview}</ReactMarkdown>
+      <button
+        type="button"
+        className="reply-toggle"
+        aria-expanded={open}
+        onClick={() => setOpen(o => !o)}
+      >
+        {open ? "Show less" : "Read the full explanation"}
+      </button>
+    </div>
+  );
+}
+
+function ConsultDesk() {
   const [mainTab,     setMainTab]     = useState<MainTab>("citizen");
   const [dossierTab,  setDossierTab]  = useState<DossierTab>("remedies");
   const [language,    setLanguage]    = useState<"en" | "hi">("en");
@@ -1217,9 +1256,7 @@ export default function HomePage() {
                       </div>
                       <div className={`bubble ${msg.sender === "agent" ? "counsel-bubble" : "user-bubble"}`}>
                         {msg.sender === "agent" ? (
-                          <div className="md-body">
-                            <ReactMarkdown>{msg.text}</ReactMarkdown>
-                          </div>
+                          <CounselMessage text={msg.text} clamp={msg.id !== "welcome"} />
                         ) : (
                           <span>{msg.text}</span>
                         )}
@@ -3180,5 +3217,18 @@ export default function HomePage() {
         </div>
       </footer>
     </div>
+  );
+}
+
+/**
+ * useSearchParams() opts the tree into client-side rendering, which Next.js
+ * requires to sit behind a Suspense boundary. Without this wrapper the
+ * production build fails while prerendering /consult.
+ */
+export default function ConsultPage() {
+  return (
+    <Suspense fallback={null}>
+      <ConsultDesk />
+    </Suspense>
   );
 }

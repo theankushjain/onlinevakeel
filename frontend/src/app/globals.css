@@ -1207,6 +1207,30 @@ body {
   margin: 1.5rem 0;
 }
 
+/* Toggle shown under a long agent reply (see CounselMessage) */
+.reply-toggle {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0;
+  font-size: 0.78rem;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--brand);
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--brand-border);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.reply-toggle:hover {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+.reply-toggle:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
 .view-notice-pill-btn {
   display: inline-flex;
   align-items: center;
