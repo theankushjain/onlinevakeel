@@ -19,7 +19,7 @@ export default function AdvocateAvatar({
   variant?: "full" | "bust";
   className?: string;
 }) {
-  const viewBox = variant === "bust" ? "100 84 120 150" : "0 60 320 320";
+  const viewBox = variant === "bust" ? "44 78 232 258" : "0 60 320 320";
 
   return (
     <svg
@@ -38,16 +38,17 @@ export default function AdvocateAvatar({
       {/* Neck */}
       <path d="M143 214 H177 V252 C177 262 168 270 160 270 C152 270 143 262 143 252 Z" fill={SKIN_SHADE} />
 
-      {/* Shirt V and collar */}
-      <path d="M128 252 L160 312 L192 252 L176 246 L160 262 L144 246 Z" fill="#FFFFFF" />
+      {/* Shirt V and crisp white wing collar */}
+      <path d="M126 250 L160 314 L194 250 L176 244 L160 262 L144 244 Z" fill="#FFFFFF" />
+      <path d="M141 245 L160 266 L179 245" fill="none" stroke="#CBD3DC" strokeWidth="1.5" strokeLinejoin="round" />
 
-      {/* Neck bands: the two white strips of an advocate's attire */}
-      <rect x="149" y="268" width="10" height="46" rx="1.5" fill="#FFFFFF" stroke="#CBD3DC" strokeWidth="1" />
-      <rect x="161" y="268" width="10" height="46" rx="1.5" fill="#FFFFFF" stroke="#CBD3DC" strokeWidth="1" />
+      {/* Neck bands: the two white strips of an Indian advocate's attire */}
+      <rect x="147" y="264" width="11" height="52" rx="2" fill="#FFFFFF" stroke="#94A3B8" strokeWidth="1.2" />
+      <rect x="162" y="264" width="11" height="52" rx="2" fill="#FFFFFF" stroke="#94A3B8" strokeWidth="1.2" />
 
-      {/* Brass scales pin */}
-      <circle cx="222" cy="304" r="9" fill={BRASS} />
-      <path d="M222 297 V311 M215 301 H229 M215 301 L213 306 H217 Z M229 301 L227 306 H231 Z" stroke={COAT} strokeWidth="1.3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      {/* Brass scales pin on lapel */}
+      <circle cx="204" cy="288" r="10.5" fill={BRASS} />
+      <path d="M204 280 V296 M196 285 H212 M196 285 L193.5 291 H198.5 Z M212 285 L209.5 291 H214.5 Z" stroke={COAT} strokeWidth="1.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
 
       {/* Ears */}
       <circle cx="112" cy="174" r="9" fill={SKIN} />

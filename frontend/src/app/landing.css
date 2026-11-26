@@ -72,7 +72,7 @@ html { scroll-behavior: smooth; }
 .nv-chat:focus-within { border-color: var(--nv-brand-2); box-shadow: 0 10px 34px rgba(20,33,61,.1), 0 0 0 3px rgba(58,79,224,.2); }
 .nv-chat.is-listening { border-color: var(--nv-red); box-shadow: 0 0 0 3px rgba(192,57,43,.18); }
 .nv-bot { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; }
-.nv-bot-avatar { width: 54px; height: 54px; flex: none; border-radius: 50%; background: var(--nv-mist); border: 2px solid var(--nv-brand); overflow: hidden; }
+.nv-bot-avatar { width: 64px; height: 64px; flex: none; border-radius: 50%; background: var(--nv-mist); border: 2px solid var(--nv-brand); overflow: hidden; }
 .nv-bot-avatar svg { width: 100%; height: 100%; display: block; }
 .nv-bubble { background: var(--nv-tint); align-self: center; padding: 9px 14px; border-radius: 4px 14px 14px 14px; font-size: .95rem; }
 .nv-textarea { width: 100%; border: 1px solid var(--nv-line); border-radius: 12px; padding: 12px 14px; font: inherit; font-size: 1rem; resize: none; color: var(--nv-ink); background: #fff; min-height: 64px; }
@@ -202,11 +202,74 @@ html { scroll-behavior: smooth; }
 .nv-seal { background: var(--nv-brand); color: #fff; }
 
 /* Hero: full-width soft band, centred content like a chat-first landing page */
-.nv-hero-band { background: var(--nv-tint); border-bottom: 1px solid var(--nv-line); }
-.nv-hero { display: block; max-width: 860px; margin: 0 auto; padding: 56px 20px 48px; text-align: center; }
+.nv-hero-band {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--nv-tint);
+  background-image:
+    radial-gradient(ellipse 68% 55% at 50% 0%, rgba(58, 79, 224, .09), transparent 70%),
+    radial-gradient(ellipse 42% 40% at 88% 82%, rgba(245, 158, 11, .06), transparent 70%),
+    repeating-linear-gradient(90deg, rgba(15, 27, 61, .022) 0 1px, transparent 1px 88px);
+  border-bottom: 1px solid var(--nv-line);
+}
+.nv-hero-bg { position: absolute; inset: 0; pointer-events: none; user-select: none; overflow: hidden; }
+.nv-hero-watermark { position: absolute; color: var(--nv-coat); opacity: 0.09; filter: blur(0.4px); }
+.nv-wm-right { right: max(1%, calc(50% - 640px)); top: 18px; width: 270px; height: 270px; animation: nv-float-slow 8s ease-in-out infinite alternate; }
+.nv-wm-left  { left: max(1%, calc(50% - 630px)); bottom: 16px; width: 240px; height: 240px; animation: nv-float-slow 9.5s ease-in-out infinite alternate-reverse; }
+.nv-wm-gavel { left: max(2%, calc(50% - 590px)); top: 22px; width: 150px; height: 150px; opacity: 0.085; animation: nv-float 7s ease-in-out infinite alternate; }
+.nv-wm-book  { right: max(2%, calc(50% - 590px)); bottom: 20px; width: 155px; height: 155px; opacity: 0.085; animation: nv-float 8.5s ease-in-out infinite alternate-reverse; }
+
+.nv-float-item {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 13px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .75);
+  border: 1px solid rgba(58, 79, 224, .18);
+  color: var(--nv-coat);
+  font-size: .76rem;
+  font-weight: 600;
+  opacity: .62;
+  filter: blur(0.75px);
+  box-shadow: 0 4px 12px rgba(15, 27, 61, .05);
+  animation: nv-float 6s ease-in-out infinite alternate;
+}
+.nv-float-item svg { color: var(--nv-brand); flex: none; }
+.nv-fl-1 { left: max(2%, calc(50% - 560px)); top: 28%; animation-duration: 5.8s; }
+.nv-fl-2 { left: max(3%, calc(50% - 540px)); top: 52%; animation-duration: 7.2s; animation-delay: -1.8s; }
+.nv-fl-3 { right: max(2%, calc(50% - 565px)); top: 30%; animation-duration: 6.4s; animation-delay: -1.2s; }
+.nv-fl-4 { right: max(3%, calc(50% - 545px)); top: 53%; animation-duration: 7.6s; animation-delay: -2.9s; }
+.nv-fl-5 { left: max(4%, calc(50% - 520px)); bottom: 16%; animation-duration: 6.8s; animation-delay: -3.4s; }
+
+.nv-float-glyph {
+  position: absolute;
+  font-family: var(--nv-serif);
+  color: var(--nv-brand);
+  opacity: .11;
+  filter: blur(0.6px);
+  line-height: 1;
+  animation: nv-float 7.5s ease-in-out infinite alternate;
+}
+.nv-fg-1 { left: max(7%, calc(50% - 455px)); top: 39%; font-size: 3.4rem; animation-delay: -1s; }
+.nv-fg-2 { right: max(7%, calc(50% - 455px)); top: 41%; font-size: 2.9rem; animation-delay: -3.5s; }
+
+@keyframes nv-float {
+  from { transform: translateY(0px); }
+  to   { transform: translateY(-14px); }
+}
+@keyframes nv-float-slow {
+  from { transform: translateY(0px) rotate(-1deg); }
+  to   { transform: translateY(-12px) rotate(1.5deg); }
+}
+
+.nv-hero { position: relative; z-index: 1; display: block; max-width: 860px; margin: 0 auto; padding: 52px 20px 48px; text-align: center; }
+.nv-eyebrow { display: inline-flex; align-items: center; gap: 7px; padding: 5px 13px; margin-bottom: 16px; border-radius: 999px; background: rgba(255,255,255,.8); border: 1px solid var(--nv-line); color: var(--nv-coat); font-size: .78rem; font-weight: 600; letter-spacing: .015em; }
+.nv-eyebrow svg { color: var(--nv-brass-ink); flex: none; }
 .nv-hero h1 { color: var(--nv-coat); font-size: clamp(2.1rem, 5vw, 3.3rem); }
 .nv-sub { margin: 18px auto 30px; max-width: 640px; }
-.nv-hero-copy .nv-chat { max-width: 740px; margin: 0 auto; border: 1.5px solid var(--nv-line); border-radius: 20px; box-shadow: 0 14px 40px rgba(58,79,224,.12); }
+.nv-hero-copy .nv-chat { max-width: 740px; margin: 0 auto; border: 1.5px solid rgba(58,79,224,.32); border-radius: 20px; box-shadow: 0 20px 50px rgba(15,27,61,.14), 0 0 0 4px rgba(58,79,224,.08); }
 .nv-bubble { font-size: 1rem; background: var(--nv-mist); color: var(--nv-coat); }
 .nv-suggest { justify-content: center; }
 .nv-chip { background: #fff; border-color: #CFD6F3; }
@@ -224,10 +287,15 @@ html { scroll-behavior: smooth; }
 .nv-stats > div span { color: var(--ci); opacity: .85; font-size: .86rem; }
 
 /* Feature cards: each has its own colour */
-.nv-card { position: relative; border: 1px solid var(--nv-line); border-top: 4px solid var(--c); border-radius: 16px; padding: 22px 20px; transition: box-shadow .2s, transform .2s; }
+.nv-card { position: relative; overflow: hidden; border: 1px solid var(--nv-line); border-top: 4px solid var(--c); border-radius: 16px; padding: 22px 20px; transition: box-shadow .2s, transform .2s; }
+.nv-card::after { content: "§"; position: absolute; right: 14px; top: 8px; font-family: var(--nv-serif); font-size: 2.2rem; line-height: 1; color: var(--nv-coat); opacity: 0.055; pointer-events: none; }
 .nv-card:hover { box-shadow: 0 12px 28px rgba(15,27,61,.1); transform: translateY(-3px); }
 .nv-card-icon { background: var(--cbg); color: var(--c); width: 42px; height: 42px; border-radius: 12px; }
 .nv-card h3 { color: var(--nv-coat); }
+
+/* Subtle legal section (§) divider above section headings */
+.nv-law-rule { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 10px; color: var(--nv-brass-ink); font-family: var(--nv-serif); font-size: .95rem; font-weight: 700; opacity: .75; }
+.nv-law-rule::before, .nv-law-rule::after { content: ""; width: 24px; height: 1px; background: currentColor; opacity: .45; }
 
 /* How it works: coloured steps */
 .nv-section-tint { background: var(--nv-tint); }
@@ -237,13 +305,22 @@ html { scroll-behavior: smooth; }
 /* FAQ, CTA, footer in the same palette */
 .nv-faq summary { color: var(--nv-coat); }
 .nv-faq details[open] summary { color: var(--nv-brand); }
-.nv-cta { background: var(--nv-brand); border-top: 0; }
+.nv-cta { background: var(--nv-brand); border-top: 2px solid rgba(245, 158, 11, .55); }
 .nv-cta .nv-btn-light { color: var(--nv-brand); }
 .nv-footer { background: var(--nv-coat); }
 .nv-sos-btn { background: #fff; }
 
+@media (max-width: 1080px) {
+  .nv-float-item, .nv-float-glyph { display: none; }
+}
 @media (max-width: 760px) {
   .nv-hero { padding-top: 36px; }
-  .nv-bot-avatar { width: 46px; height: 46px; }
+  .nv-wm-right { width: 190px; height: 190px; right: -30px; top: 8px; opacity: 0.07; }
+  .nv-wm-left  { width: 170px; height: 170px; left: -30px; bottom: 8px; opacity: 0.07; }
+  .nv-wm-gavel, .nv-wm-book { display: none; }
+  .nv-bot-avatar { width: 54px; height: 54px; }
 }
-@media (prefers-reduced-motion: reduce) { .nv-card, .nv-card:hover { transition: none; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .nv-card, .nv-card:hover { transition: none; transform: none; }
+  .nv-float-item, .nv-float-glyph, .nv-wm-right, .nv-wm-left, .nv-wm-gavel, .nv-wm-book { animation: none; }
+}

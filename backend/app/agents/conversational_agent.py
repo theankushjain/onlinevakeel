@@ -517,16 +517,22 @@ Language Preference: {language}
                 prefix,
             )
 
-        is_follow_up = bool(history and len(history) > 1) or len(q.split()) < 15
+        is_follow_up = bool(history and len(history) > 1)
         if is_follow_up:
-            where = f" An advocate in {city} can review the papers and file without delay." if city else ""
+            cite = remedies[0].get("statutory_cite") if remedies else ""
+            remedy_title = remedies[0].get("title") if remedies else ""
+            where = f" An advocate in {city} can review your papers and file before the {forum}." if city else f" Your matter goes before the {forum}."
+            bullets = []
+            if cite and remedy_title:
+                bullets.append(f"Governing provision: **{cite}** ({remedy_title}).")
+            elif cite:
+                bullets.append(f"Governing provision: **{cite}**.")
+            bullets.append(f"Keep your receipts, messages and dates in order — they establish {amount} before the {forum}.")
+            bullets.append("The draft notice on the right has been updated with the facts you just added.")
             return cls._compose(
-                f"On your {label.lower()} matter, here is where things stand.",
-                [
-                    "Keep every receipt, message and document together in date order.",
-                    "The draft notice on the right already carries the facts you have given so far.",
-                ],
-                f"Tell me any new fact and the notice updates itself.{where}",
+                f"Updated your {label.lower()} brief with your latest input.",
+                bullets,
+                f"Review the updated notice on the right or ask a specific question (e.g. documents, fees, or timeline).{where}",
                 prefix,
             )
 
@@ -596,6 +602,30 @@ Language Preference: {language}
                     "A late or false reply can cost the officer ₹250 a day, up to ₹25,000.",
                 ],
                 "The RTI application is drafted on the right — address it to the PIO of that department.",
+                prefix,
+            )
+
+        if category == "employment_labour":
+            return cls._compose(
+                f"Unpaid dues or termination without notice can be challenged for {amount} under Indian labour law.",
+                [
+                    "Under the Industrial Disputes Act / Shops & Establishments Act and Payment of Wages Act, earned salary and notice pay cannot be withheld.",
+                    "Send a written demand notice for full-and-final settlement, relieving letter, and Form 16.",
+                    "If unpaid after 15 days, file before the Labour Commissioner in your district.",
+                ],
+                "Send the demand notice on the right by registered post and email, and keep copies of your appointment letter and payslips.",
+                prefix,
+            )
+
+        if category == "criminal_bail":
+            return cls._compose(
+                "In arrest or FIR matters, immediate bail protection is available under the Bharatiya Nagarik Suraksha Sanhita (BNSS), 2023.",
+                [
+                    "For anticipatory bail before arrest, apply to the Sessions Court or High Court under **Section 482 BNSS**.",
+                    "After arrest, regular bail is sought under **Section 480 BNSS** (Magistrate) or **Section 483 BNSS** (Sessions/High Court).",
+                    "Keep a copy of the FIR, arrest memo (if any), and any alibi or chat evidence ready.",
+                ],
+                "Connect immediately with a criminal advocate in your city — timing is critical for bail.",
                 prefix,
             )
 

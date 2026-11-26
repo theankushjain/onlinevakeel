@@ -17,10 +17,11 @@ import { serif, body, serifHi } from "./fonts";
 type Lang = "en" | "hi";
 
 const COPY: Record<Lang, {
-  h1: string; sub: string; hello: string; cta: string; going: string;
+  eyebrow: string; h1: string; sub: string; hello: string; cta: string; going: string;
   suggest: string; examples: string[]; detected: string; voiceUnsupported: string; fillHint: string; speech: string; speechFound: string;
 }> = {
   en: {
+    eyebrow: "Indian Bare Acts · Supreme Court & High Court Precedents",
     h1: "Your legal question, answered with the law cited",
     sub: "Cheque bounce? Builder delay? Online fraud? Describe it in plain Hindi or English and get the exact Bare Act sections, your options, and a draft legal notice. Free.",
     hello: "Hello, how can I help you today?",
@@ -40,6 +41,7 @@ const COPY: Record<Lang, {
     speechFound: "That sounds like {label}. I will look at {law}.",
   },
   hi: {
+    eyebrow: "भारतीय बेयर एक्ट्स · सुप्रीम कोर्ट और हाई कोर्ट के फैसले",
     h1: "आपका कानूनी सवाल, धाराओं के हवाले के साथ जवाब",
     sub: "चेक बाउंस? बिल्डर की देरी? ऑनलाइन ठगी? सरल हिन्दी या अंग्रेज़ी में बताइए और पाइए सही धाराएं, आपके विकल्प और कानूनी नोटिस का ड्राफ्ट। मुफ़्त।",
     hello: "नमस्ते, मैं आपकी कैसे मदद कर सकता हूँ?",
@@ -357,8 +359,86 @@ export default function LandingPage() {
       <main>
         {/* ── HERO ── */}
         <section className="nv-hero-band" id="ask">
+          {/* Floating judicial background watermarks & law badges */}
+          <div className="nv-hero-bg" aria-hidden="true">
+            {/* Scales of Justice (top right) */}
+            <svg className="nv-hero-watermark nv-wm-right" viewBox="0 0 240 240" fill="none">
+              <g stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M120 26v164" />
+                <path d="M88 190h64M76 202h88" />
+                <path d="M52 64h136" />
+                <circle cx="120" cy="40" r="7" />
+                <path d="M52 64L30 116h44L52 64z" />
+                <path d="M30 116a22 10 0 0 0 44 0" />
+                <path d="M188 64l-22 52h44l-22-52z" />
+                <path d="M166 116a22 10 0 0 0 44 0" />
+              </g>
+            </svg>
+
+            {/* Courthouse Pillars (bottom left) */}
+            <svg className="nv-hero-watermark nv-wm-left" viewBox="0 0 220 220" fill="none">
+              <g stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M34 76L110 34l76 42H34z" />
+                <path d="M44 86h132" />
+                <path d="M56 86v76M82 86v76M110 86v76M138 86v76M164 86v76" />
+                <path d="M38 162h144M30 176h160" />
+              </g>
+            </svg>
+
+            {/* Judge's Gavel (top left) */}
+            <svg className="nv-hero-watermark nv-wm-gavel" viewBox="0 0 180 180" fill="none">
+              <g stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="66" y="34" width="44" height="24" rx="4" transform="rotate(35 88 46)" />
+                <path d="M98 62l48 48" />
+                <path d="M34 136h64M26 148h80" />
+              </g>
+            </svg>
+
+            {/* Statute / Bare Act Book (bottom right) */}
+            <svg className="nv-hero-watermark nv-wm-book" viewBox="0 0 180 180" fill="none">
+              <g stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M38 42h46a14 14 0 0 1 14 14v86a10 10 0 0 0-10-10H38V42z" />
+                <path d="M158 42h-46a14 14 0 0 0-14 14v86a10 10 0 0 1 10-10h50V42z" />
+                <path d="M52 68h26M52 86h26M118 68h26M118 86h26" />
+              </g>
+            </svg>
+
+            <span className="nv-float-item nv-fl-1">
+              <Scale size={14} />
+              <span>§ 138 · Cheque Bounce</span>
+            </span>
+            <span className="nv-float-item nv-fl-2">
+              <Landmark size={14} />
+              <span>BNS · Criminal Law</span>
+            </span>
+            <span className="nv-float-item nv-fl-3">
+              <FileText size={14} />
+              <span>Legal Notice · 15 Days</span>
+            </span>
+            <span className="nv-float-item nv-fl-4">
+              <BookOpen size={14} />
+              <span>RERA · Consumer Act</span>
+            </span>
+            <span className="nv-float-item nv-fl-5">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m14 13-7.5 7.5c-.83.83-2.17.83-3 0 0 0 0 0 0 0a2.12 2.12 0 0 1 0-3L11 10" />
+                <path d="m16 16 6-6" />
+                <path d="m8 8 6-6" />
+                <path d="m9 7 8 8" />
+                <path d="m21 11-8-8" />
+              </svg>
+              <span>Supreme Court &amp; HC</span>
+            </span>
+
+            <span className="nv-float-glyph nv-fg-1">§</span>
+            <span className="nv-float-glyph nv-fg-2">¶</span>
+          </div>
           <div className="nv-hero">
           <div className="nv-hero-copy">
+            <div className="nv-eyebrow" lang={lang}>
+              <Scale size={13} aria-hidden="true" />
+              <span>{t.eyebrow}</span>
+            </div>
             <h1 lang={lang}>{t.h1}</h1>
             <p className="nv-sub" lang={lang}>{t.sub}</p>
 
@@ -439,6 +519,7 @@ export default function LandingPage() {
 
         {/* ── FEATURES ── */}
         <section className="nv-section" id="features">
+          <div className="nv-law-rule" aria-hidden="true"><span>§</span></div>
           <h2>What you can do on OnlineVakeel</h2>
           <p className="nv-section-sub">From your first question to a booked advocate, in one place.</p>
           <div className="nv-grid">
@@ -454,6 +535,7 @@ export default function LandingPage() {
 
         {/* ── HOW IT WORKS ── */}
         <section className="nv-section nv-section-tint" id="how">
+          <div className="nv-law-rule" aria-hidden="true"><span>§</span></div>
           <h2>How it works</h2>
           <p className="nv-section-sub">No appointment needed to get started. Available any time.</p>
           <ol className="nv-steps">
