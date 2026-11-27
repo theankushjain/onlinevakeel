@@ -135,6 +135,43 @@ def health_check():
         "llm_gemini_configured": bool(settings.GEMINI_API_KEY)
     }
 
+@app.get("/api/traces")
+def list_query_traces():
+    """
+    Demo-only endpoint: Returns real query execution traces recorded by OrchestratorAgent.
+    Included solely for live demo observability and not part of the core production product.
+    """
+    traces = list(reversed(OrchestratorAgent.TRACE_LOG))
+    total = len(traces)
+    avg_latency = round(sum(t["total_latency_ms"] for t in traces) / total, 1) if total else 0.0
+    total_pii = sum(t["pii_redacted_count"] for t in traces)
+    verified_count = sum(1 for t in traces if t.get("verified"))
+    return {
+        "demo_only": True,
+        "notice": "Demo-only observability endpoint. Not part of the core production product.",
+        "models": {
+            "embedding_model": settings.EMBEDDING_MODEL,
+            "embedding_ca_cert": "certs/vm02-ca.crt",
+            "chat_model": settings.QWEN_MODEL,
+            "chat_ca_cert": "certs/vm07-ca.crt",
+        },
+        "summary": {
+            "total_queries": total,
+            "avg_latency_ms": avg_latency,
+            "total_pii_masked": total_pii,
+            "verification_pass_rate": round((verified_count / total) * 100, 1) if total else 100.0,
+        },
+        "traces": traces,
+    }
+
+@app.get("/api/traces/{trace_id}")
+def get_query_trace(trace_id: str):
+    """Demo-only endpoint: Returns full span details for a single trace_id."""
+    for trace in OrchestratorAgent.TRACE_LOG:
+        if trace["trace_id"] == trace_id:
+            return trace
+    raise HTTPException(status_code=404, detail="Trace not found")
+
 @app.post("/api/consult")
 def consult_legal_agent(req: ConsultRequest):
     """

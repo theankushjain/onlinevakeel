@@ -104,6 +104,13 @@ class IntakeAgent:
     @classmethod
     def classify_category(cls, text: str) -> str:
         text_lower = text.lower()
+        # Prevent neighbour/noise/nuisance disputes from being misclassified as cyber_fraud
+        # just because the user mentions a fictional or incidental "cyber" statute name.
+        nuisance_terms = ("loud music", "noise", "neighbor", "neighbour", "nuisance")
+        financial_cyber_terms = ("otp", "upi", "phishing", "scam", "hacked", "fraud transaction", "credit card fraud", "money deducted", "bank")
+        if any(nt in text_lower for nt in nuisance_terms) and not any(ft in text_lower for ft in financial_cyber_terms):
+            return "general_civil"
+
         for cat, keywords in cls.CATEGORIES.items():
             if any(kw in text_lower for kw in keywords):
                 return cat

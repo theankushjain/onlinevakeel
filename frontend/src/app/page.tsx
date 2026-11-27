@@ -341,6 +341,7 @@ export default function LandingPage() {
 
             <a href="#faqs" onClick={() => setMobileOpen(false)}>FAQs</a>
             <Link href="/consult?tab=advocate">For advocates</Link>
+            <Link href="/traces" title="Demo only — not part of core product">Live Traces (Demo)</Link>
           </nav>
 
           <div className="nv-header-actions">
@@ -591,6 +592,7 @@ export default function LandingPage() {
             <Link href="/consult">Consultation desk</Link>
             <Link href="/consult?tab=corpus">Bare Acts library</Link>
             <Link href="/consult?tab=advocate">Advocate portal</Link>
+            <Link href="/traces" title="Demo only — not part of core product">Live Traces (Demo Only)</Link>
           </div>
           <div>
             <h4>Helplines</h4>

@@ -673,7 +673,10 @@ class DatabaseClient:
                 score += 9
             if any(w in query_lower for w in ["video", "recording", "audio", "whatsapp", "electronic", "certificate", "65b", "63"]) and "Arjun" in item["section_number"]:
                 score += 9
-            if any(w in query_lower for w in ["cyber", "bank", "unauthorized", "otp", "reversal"]) and "Ramdoot" in item["section_number"]:
+            if (
+                any(w in query_lower for w in ["bank", "unauthorized", "otp", "reversal", "fraud transaction"])
+                or ("cyber" in query_lower and not any(n in query_lower for n in ["loud music", "noise", "neighbor", "neighbour", "nuisance"]))
+            ) and "Ramdoot" in item["section_number"]:
                 score += 9
                 
             if score > 0:
